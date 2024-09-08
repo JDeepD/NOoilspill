@@ -1,6 +1,8 @@
 "use client";
 
 import dynamic from "next/dynamic";
+import Link from "next/link";
+import { Button } from "~/components/ui/button";
 
 const MapComponent = dynamic(() => import("~/components/map"), {
   ssr: false,
@@ -21,6 +23,14 @@ export default function Maps() {
       <div className="flex flex-col items-center">
         <div>Cooking 🍜</div>
         <MapComponent />
+        <Link href={"/immersive"}>
+          <Button
+            variant={"outline"}
+            className="mt-8 border border-orange-400 hover:bg-orange-500 hover:text-white"
+          >
+            Immersive Mode
+          </Button>
+        </Link>
       </div>
     </div>
   );

@@ -1,0 +1,26 @@
+[
+    {
+      "name": "MV",
+      "country": "Mauritius",
+      "type": "Oil Spill",
+      "lat": 20.3484,
+      "lon": 57.5522,
+      "prob": 0.6
+    },
+    {
+      "name": "MV",
+      "country": "Mauritius",
+      "type": "Oil Spill",
+      "lat": 20.3484,
+      "lon": 87.5522,
+      "prob": 0.4
+    },
+    {
+      "name": "MV",
+      "country": "Mauritius",
+      "type": "Oil Spill",
+      "lat": 10.3484,
+      "lon": 67.5522,
+      "prob": 0.9
+    }
+  ]
