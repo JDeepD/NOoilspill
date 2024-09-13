@@ -13,7 +13,7 @@ export default function HomePage() {
           </span>
           <span className="bold mt-3 text-2xl">
             accidently struct the{" "}
-            <span className="font-semibold text-sky-600">
+            <span className="font-semibold text-[#56426C]">
               coral reefs of Mauritius.
             </span>
           </span>
