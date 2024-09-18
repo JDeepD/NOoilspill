@@ -1,13 +1,12 @@
 import React from "react";
 import Image from "next/image";
+import Link from "next/link";
 
 export default function Navbar() {
   return (
-    <nav className="flex items-center justify-between border px-4">
+    <nav className="mb-20 flex items-center justify-between border px-4">
       <div className="flex space-x-4">
-        <a href="#" className="hover:text-[#56426C]">
-          3D View
-        </a>
+        <Link href={"/immersive"}>3D View</Link>
       </div>
 
       <div className="flex items-center">
