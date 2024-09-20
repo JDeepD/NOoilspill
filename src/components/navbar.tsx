@@ -4,7 +4,7 @@ import Link from "next/link";
 
 export default function Navbar() {
   return (
-    <nav className="mb-20 flex items-center justify-between border px-4">
+    <nav className="mb-20 flex items-center justify-between border bg-[#CCC9DC] px-4">
       <div className="flex space-x-4">
         <Link href={"/immersive"}>3D View</Link>
       </div>
@@ -12,7 +12,7 @@ export default function Navbar() {
       <div className="flex items-center">
         <Image src={"/logo.png"} alt="The Logo" width={60} height={60} />
         <label htmlFor="agu-intel" className="hover:text-[#56426C]">
-          Aquaintel
+          Aquintel
         </label>
       </div>
 

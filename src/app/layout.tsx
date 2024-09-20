@@ -5,7 +5,7 @@ import { GeistSans } from "geist/font/sans";
 import { type Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Save the Oceans",
+  title: "Aquintel",
   description: "Oil Spills Harm Aquatic Marines",
   icons: [{ rel: "icon", url: "/favicon.ico" }],
 };

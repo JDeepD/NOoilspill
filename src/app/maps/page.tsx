@@ -14,8 +14,8 @@ export default function Maps() {
   return (
     <div>
       <Navbar />
-      <div className="flex h-screen w-screen flex-col items-center justify-center">
-        <div className="mb-8 w-2/3">
+      <div className="flex h-full w-full flex-col items-center justify-center">
+        <div className="mb-8 px-2 lg:w-2/5">
           <span>
             Our Interactive Spill Detection Map provides real-time insights into
             potential oil spills detected from vessels. By leveraging advanced
@@ -25,7 +25,7 @@ export default function Maps() {
           </span>
         </div>
         <div className="flex flex-col items-center">
-          <div>Cooking 🍜</div>
+          <div>Gulf of Mexico Region</div>
           <MapComponent />
           <Link href={"/immersive"}>
             <Button

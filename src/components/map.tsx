@@ -1,4 +1,7 @@
 "use client";
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unused-vars */
+/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-return */
+
 import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
 import useWebSocket, { ReadyState } from "react-use-websocket";
 import { useState, useEffect } from "react";
@@ -48,7 +51,7 @@ const MapComponent = () => {
       <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
       {aisData.length > 1 &&
         aisData[aisData.length - 1] != "Connected to AIS stream!" &&
-        aisData.map((data, index) => {
+        aisData.map((data: any, index) => {
           if (data != "Connected to AIS stream!" && index > 0) {
             return (
               <Marker
