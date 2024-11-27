@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import dynamic from "next/dynamic";
 import Papa from "papaparse";
 
@@ -33,6 +33,8 @@ interface Point {
 interface Trajectory {
   data: Point[];
   color: string;
+  startTime: number;
+  endTime: number;
 }
 
 const ShipTrajectory = () => {
@@ -40,12 +42,9 @@ const ShipTrajectory = () => {
   const [currentTime, setCurrentTime] = useState<string | null>(null);
   const [animationProgress, setAnimationProgress] = useState<number>(0);
   const [isAnimating, setIsAnimating] = useState(false);
-  const [isPaused, setIsPaused] = useState(false);
-  const [animationSpeed, setAnimationSpeed] = useState(100);
+  const animationRef = useRef<number | null>(null);
 
-  const vesselTypeMapping: { [key: number]: string } = {
-    // ... (previous mapping remains the same)
-  };
+  const vesselTypeMapping: { [key: number]: string } = {};
 
   useEffect(() => {
     const fetchCsvData = async (csvFile: string, color: string) => {
@@ -79,7 +78,19 @@ const ShipTrajectory = () => {
             );
 
           if (points.length > 0) {
-            setTrajectories((prev) => [...prev, { data: points, color }]);
+            const startTime = new Date(points[0]!.timestamp).getTime();
+            const endTime = new Date(
+              points[points.length - 1]!.timestamp,
+            ).getTime();
+            setTrajectories((prev) => [
+              ...prev,
+              {
+                data: points,
+                color,
+                startTime,
+                endTime,
+              },
+            ]);
           }
         },
       });
@@ -103,54 +114,60 @@ const ShipTrajectory = () => {
   }, []);
 
   const startAnimation = () => {
-    if (trajectories.length === 0) return;
+    if (trajectories.length === 0 || isAnimating) return;
+
+    const globalStartTime = Math.min(...trajectories.map((t) => t.startTime));
+    const globalEndTime = Math.max(...trajectories.map((t) => t.endTime));
+
+    const animate = () => {
+      setAnimationProgress((prevProgress) => {
+        if (prevProgress >= 100) {
+          cancelAnimationFrame(animationRef.current!);
+          setIsAnimating(false);
+          return 100;
+        }
+        const progress = prevProgress + 0.2; // Adjust speed here
+        const currentTimeStamp = new Date(
+          globalStartTime +
+            (progress / 100) * (globalEndTime - globalStartTime),
+        );
+        setCurrentTime(currentTimeStamp.toLocaleString());
+        return progress;
+      });
+
+      animationRef.current = requestAnimationFrame(animate);
+    };
+
     setIsAnimating(true);
-    setIsPaused(false);
-    setAnimationProgress(0);
+    animationRef.current = requestAnimationFrame(animate);
   };
 
-  const pauseAnimation = () => {
-    setIsPaused(!isPaused);
-  };
-
-  useEffect(() => {
-    if (isAnimating && !isPaused && trajectories.length > 0) {
-      const allPoints = trajectories.flatMap((t) => t.data);
-      const sortedPoints = allPoints.sort(
-        (a, b) =>
-          new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime(),
-      );
-      const startTime = new Date(sortedPoints[0]!.timestamp).getTime();
-      const endTime = new Date(
-        sortedPoints[sortedPoints.length - 1]!.timestamp,
-      ).getTime();
-      const totalDuration = endTime - startTime;
-
-      const animationInterval = setInterval(() => {
-        setAnimationProgress((prev) => {
-          if (prev >= 100) {
-            setIsAnimating(false);
-            return 100;
-          }
-
-          const currentTimeStamp = new Date(
-            startTime + (prev / 100) * totalDuration,
-          );
-          setCurrentTime(currentTimeStamp.toLocaleString());
-
-          return prev + 1;
-        });
-      }, animationSpeed);
-
-      return () => clearInterval(animationInterval);
+  const stopAnimation = () => {
+    if (animationRef.current) {
+      cancelAnimationFrame(animationRef.current);
     }
-  }, [isAnimating, isPaused, trajectories, animationSpeed]);
+    setIsAnimating(false);
+  };
+
+  const handleScrubberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const progress = Number(e.target.value);
+    setAnimationProgress(progress);
+
+    if (trajectories.length > 0) {
+      const globalStartTime = Math.min(...trajectories.map((t) => t.startTime));
+      const globalEndTime = Math.max(...trajectories.map((t) => t.endTime));
+      const currentTimeStamp = new Date(
+        globalStartTime + (progress / 100) * (globalEndTime - globalStartTime),
+      );
+      setCurrentTime(currentTimeStamp.toLocaleString());
+    }
+  };
 
   const accidentAreaCoords: [number, number] = [29.645, -94.965];
 
   return (
     <div className="flex h-screen flex-col">
-      <div className="">
+      <div>
         <div className="mb-5 mt-10 items-center text-center text-4xl">
           Genesis River and Voyager Collision (2019)
         </div>
@@ -161,7 +178,6 @@ const ShipTrajectory = () => {
             style={{ height: "calc(100vh - 30rem)", width: "70%" }}
           >
             <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
-
             <Circle
               center={accidentAreaCoords}
               radius={3000}
@@ -169,22 +185,16 @@ const ShipTrajectory = () => {
               fillColor="red"
               fillOpacity={0.3}
             />
-
             {trajectories.map((trajectory, index) => (
               <Polyline
                 key={index}
                 positions={trajectory.data
                   .filter((point) => {
                     const pointTime = new Date(point.timestamp).getTime();
-                    const startTime = new Date(
-                      trajectory.data[0]!.timestamp,
-                    ).getTime();
-                    const endTime = new Date(
-                      trajectory.data[trajectory.data.length - 1]!.timestamp,
-                    ).getTime();
-                    const totalDuration = endTime - startTime;
                     const progress =
-                      ((pointTime - startTime) / totalDuration) * 100;
+                      ((pointTime - trajectory.startTime) /
+                        (trajectory.endTime - trajectory.startTime)) *
+                      100;
                     return progress <= animationProgress;
                   })
                   .map((point) => point.coords)}
@@ -197,6 +207,16 @@ const ShipTrajectory = () => {
           {currentTime && (
             <div className="text-xl">Current Time: {currentTime}</div>
           )}
+          <div style={{ width: "70%" }}>
+            <input
+              type="range"
+              min="0"
+              max="100"
+              value={animationProgress}
+              onChange={handleScrubberChange}
+              className="w-full"
+            />
+          </div>
           <div className="space-x-4">
             <button
               onClick={startAnimation}
@@ -205,14 +225,13 @@ const ShipTrajectory = () => {
             >
               {isAnimating ? "Animating..." : "Start Animation"}
             </button>
-            {isAnimating && (
-              <button
-                onClick={pauseAnimation}
-                className="rounded bg-yellow-500 px-4 py-2 text-white hover:bg-yellow-600"
-              >
-                {isPaused ? "Resume" : "Pause"}
-              </button>
-            )}
+            <button
+              onClick={stopAnimation}
+              disabled={!isAnimating}
+              className="rounded bg-red-500 px-4 py-2 text-white hover:bg-red-600 disabled:opacity-50"
+            >
+              Stop
+            </button>
             <a
               target="_blank"
               className="rounded bg-green-500 px-4 py-2 text-white hover:bg-green-600"
@@ -220,21 +239,6 @@ const ShipTrajectory = () => {
             >
               Incident Report 🔗
             </a>
-          </div>
-          <div>
-            <label htmlFor="speed-control" className="mr-2">
-              Animation Speed:
-            </label>
-            <input
-              id="speed-control"
-              type="range"
-              min="50"
-              max="500"
-              value={animationSpeed}
-              onChange={(e) => setAnimationSpeed(Number(e.target.value))}
-              className="w-64"
-            />
-            <span className="ml-2">{animationSpeed} ms</span>
           </div>
         </div>
       </div>
