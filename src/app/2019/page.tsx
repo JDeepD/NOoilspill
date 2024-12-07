@@ -100,12 +100,14 @@ const ShipTrajectory = () => {
       const csvFiles = [
         "/GalvestonGenesisRiver2019/VoyagerTow-GalvestonBay-10-05-2019.csv",
         "/GalvestonGenesisRiver2019/BWOAK.csv",
+        "/GalvestonGenesisRiver2019/GENESIS-RIVER-10-05-2019.csv",
       ];
 
       await Promise.all(
         csvFiles.map((file, index) => {
-          const color = index % 2 === 0 ? "blue" : "green";
-          return fetchCsvData(file, color);
+          const color = ["red", "green", "blue"][index % 3];
+          // const color = index % 2 === 0 ? "blue" : "green";
+          return fetchCsvData(file, color as string);
         }),
       );
     };
@@ -126,7 +128,7 @@ const ShipTrajectory = () => {
           setIsAnimating(false);
           return 100;
         }
-        const progress = prevProgress + 0.2; // Adjust speed here
+        const progress = prevProgress + 0.02; // Adjust speed here
         const currentTimeStamp = new Date(
           globalStartTime +
             (progress / 100) * (globalEndTime - globalStartTime),
@@ -163,7 +165,7 @@ const ShipTrajectory = () => {
     }
   };
 
-  const accidentAreaCoords: [number, number] = [29.645, -94.965];
+  const accidentAreaCoords: [number, number] = [29.611, -94.961];
 
   return (
     <div className="flex h-screen flex-col">

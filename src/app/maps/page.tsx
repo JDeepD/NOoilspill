@@ -4,13 +4,66 @@ import dynamic from "next/dynamic";
 import Link from "next/link";
 import { Button } from "~/components/ui/button";
 import Navbar from "~/components/navbar";
-import Wslogbox from "~/components/wslogbox";
+import { collection, getDocs } from "firebase/firestore";
+import { db } from "../../lib/firebase";
+import { useEffect, useState } from "react";
 
 const MapComponent = dynamic(() => import("~/components/map"), {
   ssr: false,
 });
 
+interface AggregatedData {
+  MaxSpeed: number;
+  AvgHeading: number;
+  FirstLAT: number;
+  FirstLON: number;
+  LastLAT: number;
+  LastLON: number;
+  ProximityToPort: number;
+  ProximityToReef: number;
+  isTankerOrCargo: number;
+  isSpecialManeuver: boolean;
+}
+
+interface MMSIReports {
+  mmsi: string;
+  // ais_reports: any[];
+  aggregated_data: AggregatedData | null;
+}
+
 export default function Maps() {
+  const [data, setData] = useState<MMSIReports[]>([]);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const snapshot = await getDocs(collection(db, "sample_ais"));
+        const updatedData: MMSIReports[] = snapshot.docs
+          .map((doc) => {
+            const data = doc.data() as { aggregated_data?: AggregatedData };
+            return {
+              mmsi: doc.id,
+              aggregated_data: data.aggregated_data ?? null,
+            };
+          })
+          .filter(
+            (item) =>
+              item.aggregated_data &&
+              item.aggregated_data.LastLAT !== undefined &&
+              item.aggregated_data.LastLON !== undefined,
+          ); // Filter out invalid entries
+        setData(updatedData);
+      } catch (error) {
+        console.error("Error fetching data:", error);
+      }
+    };
+
+    fetchData();
+    const interval = setInterval(fetchData, 5000);
+
+    return () => clearInterval(interval);
+  }, []);
+
   return (
     <div>
       <Navbar />
@@ -26,7 +79,7 @@ export default function Maps() {
         </div>
         <div className="flex flex-col items-center">
           <div>Gulf of Mexico Region</div>
-          <MapComponent />
+          <MapComponent data={data} />
           <Link href={"/immersive"}>
             <Button
               variant={"outline"}
@@ -35,7 +88,6 @@ export default function Maps() {
               Immersive Mode
             </Button>
           </Link>
-          <Wslogbox />
         </div>
       </div>
     </div>
