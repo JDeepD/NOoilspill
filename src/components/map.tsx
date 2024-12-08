@@ -40,7 +40,7 @@ const MapComponent = ({
     <MapContainer
       center={center}
       zoom={5}
-      style={{ height: "max(50vh, 300px)", width: "max(90vw, 300px)" }}
+      style={{ height: "max(50vh, 300px)", width: "max(80vw, 300px)" }}
     >
       <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
       {data
@@ -51,7 +51,6 @@ const MapComponent = ({
             ship.aggregated_data.LastLON !== undefined,
         )
         .map((ship) => {
-          // Select the appropriate icon based on the isAnomalous field
           let icon = showAnomalies
             ? ship.aggregated_data!.isAnomalous === 1
               ? redDotIcon

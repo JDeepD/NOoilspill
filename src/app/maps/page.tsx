@@ -86,38 +86,23 @@ export default function Maps() {
         </div>
         <div className="flex flex-col items-center">
           <div className="text-3xl font-bold">Gulf of Mexico Region</div>
-          <div></div>
-          <div className="mt-4">
+
+          <div className="my-4 flex gap-4">
             <Button
               variant={"outline"}
-              className="mr-4 border border-[#CCC9DC] hover:bg-[#CCC9DC] hover:text-[#56426C]"
+              className="border border-[#CCC9DC] hover:bg-sky-200 hover:text-black"
               onClick={handleAISAnomalyDetection}
             >
-              Run AIS Anomaly Detection
+              Run AIS Model
             </Button>
-          </div>
 
-          <div className="mt-4 flex">
-            <label className="mr-4 flex items-center text-xl">
-              <input
-                type="checkbox"
-                checked={showAnomalousShips}
-                onChange={() => setShowAnomalousShips(!showAnomalousShips)}
-                className="mr-2"
-              />
-              Show Anomalous Ships
-            </label>
-            <label className="flex items-center text-xl">
-              <input
-                type="checkbox"
-                checked={showConfirmedOilSpills}
-                onChange={() =>
-                  setShowConfirmedOilSpills(!showConfirmedOilSpills)
-                }
-                className="mr-2"
-              />
-              Show Confirmed Oil Spills
-            </label>
+            <Button
+              variant={"outline"}
+              className="border border-[#CCC9DC] hover:bg-sky-200 hover:text-black"
+              onClick={handleAISAnomalyDetection}
+            >
+              Run SAR Model
+            </Button>
           </div>
 
           <div className="flex w-[90%] gap-2">
@@ -146,6 +131,26 @@ export default function Maps() {
                   <option value="option3">Passenger</option>
                 </select>
               </div>
+              <label className="flex items-center justify-center text-xl">
+                <input
+                  type="checkbox"
+                  checked={showAnomalousShips}
+                  onChange={() => setShowAnomalousShips(!showAnomalousShips)}
+                  className="mr-2"
+                />
+                Show Anomalous Ships
+              </label>
+              <label className="flex justify-center text-xl">
+                <input
+                  type="checkbox"
+                  checked={showConfirmedOilSpills}
+                  onChange={() =>
+                    setShowConfirmedOilSpills(!showConfirmedOilSpills)
+                  }
+                  className="mr-2"
+                />
+                Show Confirmed Oil Spills
+              </label>
             </div>
 
             <MapComponent data={[]} showAnomalies={false} />
