@@ -60,10 +60,10 @@ export default function Maps() {
       }
     };
 
-    fetchData();
-    const interval = setInterval(fetchData, 5000);
+    // fetchData();
+    // const interval = setInterval(fetchData, 25000); // 25sec
 
-    return () => clearInterval(interval);
+    // return () => clearInterval(interval);
   }, []);
 
   const handleAISAnomalyDetection = () => {
@@ -98,7 +98,7 @@ export default function Maps() {
           </div>
 
           <div className="mt-4 flex">
-            <label className="mr-4 flex items-center">
+            <label className="mr-4 flex items-center text-xl">
               <input
                 type="checkbox"
                 checked={showAnomalousShips}
@@ -107,7 +107,7 @@ export default function Maps() {
               />
               Show Anomalous Ships
             </label>
-            <label className="flex items-center">
+            <label className="flex items-center text-xl">
               <input
                 type="checkbox"
                 checked={showConfirmedOilSpills}
@@ -120,7 +120,75 @@ export default function Maps() {
             </label>
           </div>
 
-          <MapComponent data={data} showAnomalies={showAnomalousShips} />
+          <div className="flex w-[90%] gap-2">
+            <div className="flex h-[50vh] w-2/5 flex-col gap-2 rounded-md bg-[#CCC9DC] text-xl">
+              <span className="mt-4 flex items-center justify-center text-xl">
+                Voyage Controller
+              </span>
+              <div className="flex items-center justify-center gap-2">
+                <input
+                  className="w-4/6 rounded-md placeholder:text-center"
+                  placeholder="Search Vessels"
+                ></input>
+                <button className="rounded-md border bg-white px-4">🔍</button>
+              </div>
+              <div className="flex items-center justify-center gap-2">
+                <label className="flex items-center justify-center font-medium text-gray-700">
+                  Ship Type:
+                </label>
+                <select
+                  id="options"
+                  className="w-3/5 rounded border-gray-300 text-lg focus:border-indigo-500 focus:ring-indigo-500"
+                >
+                  <option value="option1">All Ships</option>
+                  <option value="option1">Oil Tankers</option>
+                  <option value="option2">Cargo</option>
+                  <option value="option3">Passenger</option>
+                </select>
+              </div>
+            </div>
+
+            <MapComponent data={[]} showAnomalies={false} />
+
+            <div className="flex h-[50vh] w-2/5 flex-col gap-2 rounded-md bg-[#CCC9DC]">
+              <span className="mt-4 flex items-center justify-center text-xl">
+                Voyage Display
+              </span>
+              <div className="mx-4 flex items-center justify-center gap-4 rounded-md border-2 border-solid border-gray-500 bg-[#F9F3FF] py-2 text-xl">
+                <span>Ship Name: </span>
+                <span>{"Voyager"}</span>
+              </div>
+
+              <div className="mx-4 flex items-center justify-center gap-4 rounded-md border-2 border-solid border-gray-500 bg-[#F9F3FF] py-2 text-xl">
+                <span>Ship Type: </span>
+                <span>{"Tanker"}</span>
+              </div>
+              <div className="mx-4 flex items-center justify-center gap-4 rounded-md border-2 border-solid border-gray-500 bg-[#F9F3FF] py-2 text-xl">
+                <span>Stall Duration(mins): </span>
+                <span>{"Voyager"}</span>
+              </div>
+
+              <div className="mx-4 flex items-center justify-center gap-4 rounded-md border-2 border-solid border-gray-500 bg-[#F9F3FF] py-2 text-xl">
+                <span>U-Turns: </span>
+                <span>{"Voyager"}</span>
+              </div>
+
+              <div className="mx-4 flex items-center justify-center gap-4 rounded-md border-2 border-solid border-gray-500 bg-[#F9F3FF] py-2 text-xl">
+                <span>Max Speed: </span>
+                <span>{"Voyager"}</span>
+              </div>
+
+              <div className="mx-4 flex items-center justify-center gap-4 rounded-md border-2 border-solid border-gray-500 bg-[#F9F3FF] py-2 text-xl">
+                <span>Anomalous AIS: </span>
+                <span>{"Voyager"}</span>
+              </div>
+
+              <div className="mx-4 flex items-center justify-center gap-4 rounded-md border-2 border-solid border-gray-500 bg-[#F9F3FF] py-2 text-xl">
+                <span>SAR Confirmation: </span>
+                <span>{"No"}</span>
+              </div>
+            </div>
+          </div>
 
           <Link href={"/immersive"}>
             <Button
