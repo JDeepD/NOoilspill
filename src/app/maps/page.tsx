@@ -23,16 +23,18 @@ interface AggregatedData {
   ProximityToReef: number;
   isTankerOrCargo: number;
   isSpecialManeuver: boolean;
+  isAnomalous: number;
 }
 
 interface MMSIReports {
   mmsi: string;
-  // ais_reports: any[];
   aggregated_data: AggregatedData | null;
 }
 
 export default function Maps() {
   const [data, setData] = useState<MMSIReports[]>([]);
+  const [showAnomalousShips, setShowAnomalousShips] = useState(false);
+  const [showConfirmedOilSpills, setShowConfirmedOilSpills] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -64,6 +66,11 @@ export default function Maps() {
     return () => clearInterval(interval);
   }, []);
 
+  const handleAISAnomalyDetection = () => {
+    // Implement the logic for AIS Anomaly Detection
+    console.log("Running AIS Anomaly Detection");
+  };
+
   return (
     <div>
       <Navbar />
@@ -78,8 +85,43 @@ export default function Maps() {
           </span>
         </div>
         <div className="flex flex-col items-center">
-          <div>Gulf of Mexico Region</div>
-          <MapComponent data={data} />
+          <div className="text-3xl font-bold">Gulf of Mexico Region</div>
+          <div></div>
+          <div className="mt-4">
+            <Button
+              variant={"outline"}
+              className="mr-4 border border-[#CCC9DC] hover:bg-[#CCC9DC] hover:text-[#56426C]"
+              onClick={handleAISAnomalyDetection}
+            >
+              Run AIS Anomaly Detection
+            </Button>
+          </div>
+
+          <div className="mt-4 flex">
+            <label className="mr-4 flex items-center">
+              <input
+                type="checkbox"
+                checked={showAnomalousShips}
+                onChange={() => setShowAnomalousShips(!showAnomalousShips)}
+                className="mr-2"
+              />
+              Show Anomalous Ships
+            </label>
+            <label className="flex items-center">
+              <input
+                type="checkbox"
+                checked={showConfirmedOilSpills}
+                onChange={() =>
+                  setShowConfirmedOilSpills(!showConfirmedOilSpills)
+                }
+                className="mr-2"
+              />
+              Show Confirmed Oil Spills
+            </label>
+          </div>
+
+          <MapComponent data={data} showAnomalies={showAnomalousShips} />
+
           <Link href={"/immersive"}>
             <Button
               variant={"outline"}
