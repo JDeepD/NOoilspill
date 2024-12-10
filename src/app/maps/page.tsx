@@ -24,6 +24,7 @@ interface AggregatedData {
   isTankerOrCargo: number;
   isSpecialManeuver: boolean;
   isAnomalous: number;
+  ShipName: string;
 }
 
 interface MMSIReports {
@@ -31,14 +32,30 @@ interface MMSIReports {
   aggregated_data: AggregatedData | null;
 }
 
+const CacheExpirationTime = 60000;
+
 export default function Maps() {
   const [data, setData] = useState<MMSIReports[]>([]);
   const [showAnomalousShips, setShowAnomalousShips] = useState(false);
   const [showConfirmedOilSpills, setShowConfirmedOilSpills] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedShip, setSelectedShip] = useState<MMSIReports | null>(null);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
+        const cachedData = localStorage.getItem("aisData");
+        const cacheTimestamp = localStorage.getItem("aisDataTimestamp");
+        if (
+          cachedData &&
+          cacheTimestamp &&
+          Date.now() - Number(cacheTimestamp) < CacheExpirationTime
+        ) {
+          setData(JSON.parse(cachedData));
+          setLoading(false);
+          return;
+        }
         const snapshot = await getDocs(collection(db, "sample_ais"));
         const updatedData: MMSIReports[] = snapshot.docs
           .map((doc) => {
@@ -53,28 +70,42 @@ export default function Maps() {
               item.aggregated_data &&
               item.aggregated_data.LastLAT !== undefined &&
               item.aggregated_data.LastLON !== undefined,
-          ); // Filter out invalid entries
+          );
+        localStorage.setItem("aisData", JSON.stringify(updatedData));
+        localStorage.setItem("aisDataTimestamp", String(Date.now()));
         setData(updatedData);
       } catch (error) {
         console.error("Error fetching data:", error);
+      } finally {
+        setLoading(false);
       }
     };
 
-    // fetchData();
-    // const interval = setInterval(fetchData, 25000); // 25sec
+    fetchData();
 
-    // return () => clearInterval(interval);
+    const interval = setInterval(fetchData, 25000);
+    return () => clearInterval(interval);
   }, []);
 
+  const handleSearch = () => {
+    if (searchQuery) {
+      const foundShip = data.find((ship) =>
+        ship.aggregated_data?.ShipName.toLowerCase().includes(
+          searchQuery.toLowerCase(),
+        ),
+      );
+      setSelectedShip(foundShip || null);
+    }
+  };
+
   const handleAISAnomalyDetection = () => {
-    // Implement the logic for AIS Anomaly Detection
     console.log("Running AIS Anomaly Detection");
   };
 
   return (
     <div>
       <Navbar />
-      <div className="flex h-full w-full flex-col items-center justify-center">
+      <div className="flex h-full w-full flex-col items-center justify-center text-xl">
         <div className="mb-8 px-2 lg:w-2/5">
           <span>
             Our Interactive Spill Detection Map provides real-time insights into
@@ -114,8 +145,15 @@ export default function Maps() {
                 <input
                   className="w-4/6 rounded-md placeholder:text-center"
                   placeholder="Search Vessels"
-                ></input>
-                <button className="rounded-md border bg-white px-4">🔍</button>
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
+                <button
+                  className="rounded-md border bg-white px-4"
+                  onClick={handleSearch}
+                >
+                  🔍
+                </button>
               </div>
               <div className="flex items-center justify-center gap-2">
                 <label className="flex items-center justify-center font-medium text-gray-700">
@@ -153,7 +191,19 @@ export default function Maps() {
               </label>
             </div>
 
-            <MapComponent data={[]} showAnomalies={false} />
+            {loading ? (
+              <div className="flex h-[50vh] w-[80vw] items-center justify-center bg-gray-200">
+                <span className="animate-pulse text-xl text-gray-500">
+                  Loading Map...
+                </span>
+              </div>
+            ) : (
+              <MapComponent
+                data={data}
+                showAnomalies={showAnomalousShips}
+                searchQuery={searchQuery}
+              />
+            )}
 
             <div className="flex h-[50vh] w-2/5 flex-col gap-2 rounded-md bg-[#CCC9DC]">
               <span className="mt-4 flex items-center justify-center text-xl">
@@ -161,36 +211,44 @@ export default function Maps() {
               </span>
               <div className="mx-4 flex items-center justify-center gap-4 rounded-md border-2 border-solid border-gray-500 bg-[#F9F3FF] py-2 text-xl">
                 <span>Ship Name: </span>
-                <span>{"Voyager"}</span>
+                <span>{selectedShip?.aggregated_data?.ShipName || "N/A"}</span>
               </div>
 
               <div className="mx-4 flex items-center justify-center gap-4 rounded-md border-2 border-solid border-gray-500 bg-[#F9F3FF] py-2 text-xl">
                 <span>Ship Type: </span>
-                <span>{"Tanker"}</span>
+                <span>
+                  {selectedShip?.aggregated_data?.isTankerOrCargo === 1
+                    ? "Tanker/Cargo"
+                    : "N/A"}
+                </span>
               </div>
               <div className="mx-4 flex items-center justify-center gap-4 rounded-md border-2 border-solid border-gray-500 bg-[#F9F3FF] py-2 text-xl">
                 <span>Stall Duration(mins): </span>
-                <span>{"Voyager"}</span>
+                <span>{"N/A"}</span>
               </div>
 
               <div className="mx-4 flex items-center justify-center gap-4 rounded-md border-2 border-solid border-gray-500 bg-[#F9F3FF] py-2 text-xl">
                 <span>U-Turns: </span>
-                <span>{"Voyager"}</span>
+                <span>{"N/A"}</span>
               </div>
 
               <div className="mx-4 flex items-center justify-center gap-4 rounded-md border-2 border-solid border-gray-500 bg-[#F9F3FF] py-2 text-xl">
                 <span>Max Speed: </span>
-                <span>{"Voyager"}</span>
+                <span>{selectedShip?.aggregated_data?.MaxSpeed || "N/A"}</span>
               </div>
 
               <div className="mx-4 flex items-center justify-center gap-4 rounded-md border-2 border-solid border-gray-500 bg-[#F9F3FF] py-2 text-xl">
                 <span>Anomalous AIS: </span>
-                <span>{"Voyager"}</span>
+                <span>
+                  {selectedShip?.aggregated_data?.isAnomalous === 1
+                    ? "Yes"
+                    : "No"}
+                </span>
               </div>
 
               <div className="mx-4 flex items-center justify-center gap-4 rounded-md border-2 border-solid border-gray-500 bg-[#F9F3FF] py-2 text-xl">
                 <span>SAR Confirmation: </span>
-                <span>{"No"}</span>
+                <span>{"N/A"}</span>
               </div>
             </div>
           </div>

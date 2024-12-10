@@ -1,12 +1,12 @@
-"use client";
-
-import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
+import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
+import { useEffect, useMemo } from "react";
 
 const MapComponent = ({
   data,
   showAnomalies,
+  searchQuery,
 }: {
   data: {
     mmsi: string;
@@ -14,27 +14,74 @@ const MapComponent = ({
       LastLAT: number;
       LastLON: number;
       isAnomalous: number;
+      ShipName: string;
     } | null;
   }[];
   showAnomalies: boolean;
+  searchQuery: string;
 }) => {
   const center: [number, number] = [24.85898853164005, -90.78569202255129];
 
-  // Green marker icon for normal ships
-  const greenDotIcon = L.divIcon({
-    html: `<div style="width: 8px; height: 8px; background-color: green; border-radius: 50%;"></div>`,
-    className: "",
-    iconSize: [15, 15],
-    iconAnchor: [7, 7],
-  });
+  const greenDotIcon = useMemo(
+    () =>
+      L.divIcon({
+        html: `<div style="width: 8px; height: 8px; background-color: green; border-radius: 50%;"></div>`,
+        className: "",
+        iconSize: [15, 15],
+        iconAnchor: [7, 7],
+      }),
+    [],
+  );
 
-  // Red marker icon for anomalous ships
-  const redDotIcon = L.divIcon({
-    html: `<div style="width: 8px; height: 8px; background-color: red; border-radius: 50%;"></div>`,
-    className: "",
-    iconSize: [15, 15],
-    iconAnchor: [7, 7],
-  });
+  const redDotIcon = useMemo(
+    () =>
+      L.divIcon({
+        html: `<div style="width: 8px; height: 8px; background-color: red; border-radius: 50%;"></div>`,
+        className: "",
+        iconSize: [15, 15],
+        iconAnchor: [7, 7],
+      }),
+    [],
+  );
+
+  const ZoomToSearchedShip = ({ searchQuery }: { searchQuery: string }) => {
+    const map = useMap();
+
+    useEffect(() => {
+      // Only zoom if search query is not empty and at least 3 characters long
+      if (searchQuery && searchQuery.length >= 3) {
+        const matchedShip = data.find((ship) =>
+          ship.aggregated_data?.ShipName.toLowerCase().includes(
+            searchQuery.toLowerCase(),
+          ),
+        );
+
+        if (matchedShip && matchedShip.aggregated_data) {
+          const { LastLAT, LastLON } = matchedShip.aggregated_data;
+          map.setView([LastLAT, LastLON], 10, { animate: true });
+        }
+      }
+    }, [searchQuery, data, map]);
+
+    return null;
+  };
+
+  // Filter and memoize filtered ships to prevent unnecessary re-renders
+  const filteredShips = useMemo(
+    () =>
+      data.filter(
+        (ship) =>
+          ship.aggregated_data &&
+          ship.aggregated_data.LastLAT !== undefined &&
+          ship.aggregated_data.LastLON !== undefined &&
+          // Optional: filter by search query if needed
+          (!searchQuery ||
+            ship.aggregated_data.ShipName.toLowerCase().includes(
+              searchQuery.toLowerCase(),
+            )),
+      ),
+    [data, searchQuery],
+  );
 
   return (
     <MapContainer
@@ -43,44 +90,40 @@ const MapComponent = ({
       style={{ height: "max(50vh, 300px)", width: "max(80vw, 300px)" }}
     >
       <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
-      {data
-        .filter(
-          (ship) =>
-            ship.aggregated_data &&
-            ship.aggregated_data.LastLAT !== undefined &&
-            ship.aggregated_data.LastLON !== undefined,
-        )
-        .map((ship) => {
-          let icon = showAnomalies
-            ? ship.aggregated_data!.isAnomalous === 1
-              ? redDotIcon
-              : greenDotIcon
-            : greenDotIcon;
+      <ZoomToSearchedShip searchQuery={searchQuery} />
+      {filteredShips.map((ship) => {
+        const icon = showAnomalies
+          ? ship.aggregated_data!.isAnomalous === 1
+            ? redDotIcon
+            : greenDotIcon
+          : greenDotIcon;
 
-          return (
-            <Marker
-              key={ship.mmsi}
-              position={[
-                ship.aggregated_data!.LastLAT,
-                ship.aggregated_data!.LastLON,
-              ]}
-              icon={icon}
-            >
-              <Popup>
-                <div>
-                  <strong>MMSI:</strong> {ship.mmsi}
-                  <br />
-                  <strong>Last LAT:</strong> {ship.aggregated_data!.LastLAT}
-                  <br />
-                  <strong>Last LON:</strong> {ship.aggregated_data!.LastLON}
-                  <br />
-                  <strong>Is Anomalous:</strong>{" "}
-                  {ship.aggregated_data!.isAnomalous === 1 ? "Yes" : "No"}
-                </div>
-              </Popup>
-            </Marker>
-          );
-        })}
+        return (
+          <Marker
+            key={ship.mmsi}
+            position={[
+              ship.aggregated_data!.LastLAT,
+              ship.aggregated_data!.LastLON,
+            ]}
+            icon={icon}
+          >
+            <Popup>
+              <div>
+                <strong>MMSI:</strong> {ship.mmsi}
+                <br />
+                <strong>Vessel Name:</strong> {ship.aggregated_data!.ShipName}
+                <br />
+                <strong>Last LAT:</strong> {ship.aggregated_data!.LastLAT}
+                <br />
+                <strong>Last LON:</strong> {ship.aggregated_data!.LastLON}
+                <br />
+                <strong>Is Anomalous:</strong>{" "}
+                {ship.aggregated_data!.isAnomalous === 1 ? "Yes" : "No"}
+              </div>
+            </Popup>
+          </Marker>
+        );
+      })}
     </MapContainer>
   );
 };
