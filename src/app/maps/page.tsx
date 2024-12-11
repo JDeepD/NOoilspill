@@ -25,6 +25,8 @@ interface AggregatedData {
   isSpecialManeuver: boolean;
   isAnomalous: number;
   ShipName: string;
+  stallDuration: number;
+  uturns: number;
 }
 
 interface MMSIReports {
@@ -52,7 +54,8 @@ export default function Maps() {
           cacheTimestamp &&
           Date.now() - Number(cacheTimestamp) < CacheExpirationTime
         ) {
-          setData(JSON.parse(cachedData));
+          const parsedData = JSON.parse(cachedData);
+          setData(parsedData);
           setLoading(false);
           return;
         }
@@ -98,7 +101,40 @@ export default function Maps() {
     }
   };
 
-  const handleAISAnomalyDetection = () => {
+  const handleShipSelect = (mmsi: string) => {
+    const ship = data.find((ship) => ship.mmsi === mmsi);
+    setSelectedShip(ship || null);
+    console.log(ship);
+    if (ship?.aggregated_data?.ShipName) {
+      setSearchQuery(ship.aggregated_data.ShipName);
+    }
+  };
+
+  const handleAISAnomalyDetection = async () => {
+    const url =
+      "http://ec2-3-7-248-53.ap-south-1.compute.amazonaws.com/sosemail/iso-forest";
+    const body = {
+      contamination: 0.05,
+      n_estimators: 500,
+      features_for_if: [
+        "isSpecialManeuver",
+        "uturns",
+        "MaxSpeed",
+        "isTankerOrCargo",
+        "ProximityToPort",
+        "ProximityToReef",
+        "stallDuration",
+      ],
+    };
+    setLoading(true);
+    const res = await fetch(url, {
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(body),
+      method: "POST",
+    });
+    setLoading(false);
     console.log("Running AIS Anomaly Detection");
   };
 
@@ -146,7 +182,7 @@ export default function Maps() {
                   className="w-4/6 rounded-md placeholder:text-center"
                   placeholder="Search Vessels"
                   value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onChange={(e) => setSearchQuery(e.target.value.trim())}
                 />
                 <button
                   className="rounded-md border bg-white px-4"
@@ -202,6 +238,7 @@ export default function Maps() {
                 data={data}
                 showAnomalies={showAnomalousShips}
                 searchQuery={searchQuery}
+                onShipSelect={handleShipSelect}
               />
             )}
 
@@ -219,22 +256,27 @@ export default function Maps() {
                 <span>
                   {selectedShip?.aggregated_data?.isTankerOrCargo === 1
                     ? "Tanker/Cargo"
-                    : "N/A"}
+                    : "Other"}
                 </span>
               </div>
               <div className="mx-4 flex items-center justify-center gap-4 rounded-md border-2 border-solid border-gray-500 bg-[#F9F3FF] py-2 text-xl">
                 <span>Stall Duration(mins): </span>
-                <span>{"N/A"}</span>
+                <span>
+                  {selectedShip?.aggregated_data?.stallDuration?.toFixed(2) ??
+                    "N/A"}
+                </span>
               </div>
 
               <div className="mx-4 flex items-center justify-center gap-4 rounded-md border-2 border-solid border-gray-500 bg-[#F9F3FF] py-2 text-xl">
                 <span>U-Turns: </span>
-                <span>{"N/A"}</span>
+                <span>{selectedShip?.aggregated_data?.uturns ?? "N/A"}</span>
               </div>
 
               <div className="mx-4 flex items-center justify-center gap-4 rounded-md border-2 border-solid border-gray-500 bg-[#F9F3FF] py-2 text-xl">
                 <span>Max Speed: </span>
-                <span>{selectedShip?.aggregated_data?.MaxSpeed || "N/A"}</span>
+                <span>
+                  {selectedShip?.aggregated_data?.MaxSpeed?.toFixed(2) ?? "N/A"}
+                </span>
               </div>
 
               <div className="mx-4 flex items-center justify-center gap-4 rounded-md border-2 border-solid border-gray-500 bg-[#F9F3FF] py-2 text-xl">

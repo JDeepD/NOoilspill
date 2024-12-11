@@ -7,6 +7,7 @@ const MapComponent = ({
   data,
   showAnomalies,
   searchQuery,
+  onShipSelect,
 }: {
   data: {
     mmsi: string;
@@ -19,6 +20,7 @@ const MapComponent = ({
   }[];
   showAnomalies: boolean;
   searchQuery: string;
+  onShipSelect?: (mmsi: string) => void;
 }) => {
   const center: [number, number] = [24.85898853164005, -90.78569202255129];
 
@@ -106,6 +108,9 @@ const MapComponent = ({
               ship.aggregated_data!.LastLON,
             ]}
             icon={icon}
+            eventHandlers={{
+              click: () => onShipSelect && onShipSelect(ship.mmsi),
+            }}
           >
             <Popup>
               <div>
