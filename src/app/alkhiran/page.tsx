@@ -50,8 +50,10 @@ export default function Maps() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const cachedData = localStorage.getItem("aisData");
-        const cacheTimestamp = localStorage.getItem("aisDataTimestamp");
+        const cachedData = localStorage.getItem("aisDataAlAkhiran");
+        const cacheTimestamp = localStorage.getItem(
+          "aisDataTimestampAlAkhiran",
+        );
         if (
           cachedData &&
           cacheTimestamp &&
@@ -62,7 +64,7 @@ export default function Maps() {
           setLoading(false);
           return;
         }
-        const snapshot = await getDocs(collection(db, "sample_ais"));
+        const snapshot = await getDocs(collection(db, "AlKhiran"));
         const updatedData: MMSIReports[] = snapshot.docs
           .map((doc) => {
             const data = doc.data() as { aggregated_data?: AggregatedData };
@@ -77,8 +79,8 @@ export default function Maps() {
               item.aggregated_data.LastLAT !== undefined &&
               item.aggregated_data.LastLON !== undefined,
           );
-        localStorage.setItem("aisData", JSON.stringify(updatedData));
-        localStorage.setItem("aisDataTimestamp", String(Date.now()));
+        localStorage.setItem("aisDataAlAkhiran", JSON.stringify(updatedData));
+        localStorage.setItem("aisDataTimestampAlAkhiran", String(Date.now()));
         setData(updatedData);
       } catch (error) {
         console.error("Error fetching data:", error);
@@ -116,6 +118,36 @@ export default function Maps() {
     if (role === "basic-user") {
       alert("You donot have permissions to execute this command.");
       return;
+    }
+    try {
+      if (selectedShip?.aggregated_data?.ShipName === "DLB 1600") {
+      }
+      const imageResponse = await fetch("/alkhiran-dlb1600.jpeg");
+      const imageBlob = await imageResponse.blob();
+
+      const formData = new FormData();
+      formData.append("file", imageBlob, "alkhiran-dlb1600.jpeg");
+
+      const res = await fetch(
+        "https://45d0-35-237-46-186.ngrok-free.app//upload",
+        {
+          method: "POST",
+          body: formData,
+        },
+      );
+
+      if (!res.ok) {
+        throw new Error(`Failed to upload: ${res.statusText}`);
+      }
+
+      const classification = await res.text();
+      if (classification === "0") {
+        alert("No Oil Spill Detected by SAR");
+      } else if (classification == "1") {
+        alert("Oil Spill Detected by SAR");
+      }
+    } catch (error) {
+      alert("Failed to process the image. Try again later");
     }
   };
 
@@ -156,7 +188,9 @@ export default function Maps() {
       <Navbar />
       <div className="flex h-full w-full flex-col items-center justify-center text-xl">
         <div className="flex flex-col items-center">
-          <div className="text-3xl font-bold">Gulf of Mexico Region</div>
+          <div className="text-3xl font-bold">
+            Persian Gulf Region (Al Akhiran DLB 1600 Spill)
+          </div>
 
           <div className="my-4 flex w-[324px] justify-between">
             <Button
@@ -243,7 +277,7 @@ export default function Maps() {
                 showAnomalies={showAnomalousShips}
                 searchQuery={searchQuery}
                 onShipSelect={handleShipSelect}
-                center={[24.85898853164005, -90.78569202255129]}
+                center={[28.70349167, 48.5]}
               />
             )}
 
@@ -291,12 +325,20 @@ export default function Maps() {
               </div>
 
               <div className="flex h-full w-full flex-col items-center justify-center p-2">
-                {selectedShip && (
-                  <img
-                    className="border-2 border-solid border-gray-500 bg-white"
-                    src={`http://ec2-65-2-37-206.ap-south-1.compute.amazonaws.com/sar/generate_sar_image?lat=${selectedShip?.aggregated_data?.LastLAT}&lon=${selectedShip?.aggregated_data?.LastLON}`}
-                  ></img>
-                )}
+                {selectedShip &&
+                  selectedShip.aggregated_data?.ShipName === "DLB 1600" && (
+                    <img
+                      className="max-h-[20rem] max-w-[20rem] border-2 border-solid border-gray-500 bg-white"
+                      src={`/alkhiran-dlb1600.jpeg`}
+                    ></img>
+                  )}
+                {selectedShip &&
+                  selectedShip.aggregated_data?.ShipName !== "DLB 1600" && (
+                    <img
+                      className="border-2 border-solid border-gray-500 bg-white"
+                      src={`http://ec2-65-2-37-206.ap-south-1.compute.amazonaws.com/sar/generate_sar_image?lat=${selectedShip?.aggregated_data?.LastLAT}&lon=${selectedShip?.aggregated_data?.LastLON}`}
+                    ></img>
+                  )}
               </div>
             </div>
           </div>

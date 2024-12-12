@@ -8,6 +8,7 @@ const MapComponent = ({
   showAnomalies,
   searchQuery,
   onShipSelect,
+  center,
 }: {
   data: {
     mmsi: string;
@@ -21,8 +22,9 @@ const MapComponent = ({
   showAnomalies: boolean;
   searchQuery: string;
   onShipSelect?: (mmsi: string) => void;
+  center: [number, number];
 }) => {
-  const center: [number, number] = [24.85898853164005, -90.78569202255129];
+  // const center: [number, number] = [24.85898853164005, -90.78569202255129];
 
   const greenDotIcon = useMemo(
     () =>
@@ -89,7 +91,7 @@ const MapComponent = ({
     <MapContainer
       center={center}
       zoom={5}
-      style={{ height: "max(50vh, 300px)", width: "max(80vw, 300px)" }}
+      style={{ height: "max(70vh, 300px)", width: "max(80vw, 300px)" }}
     >
       <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
       <ZoomToSearchedShip searchQuery={searchQuery} />
