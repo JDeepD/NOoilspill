@@ -117,6 +117,24 @@ export default function Maps() {
       alert("You donot have permissions to execute this command.");
       return;
     }
+    const res = await fetch(
+      "https://aea7-35-237-46-186.ngrok-free.app/upload_from_url",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          url: `http://ec2-65-2-37-206.ap-south-1.compute.amazonaws.com/sar/generate_sar_image?lat=${selectedShip?.aggregated_data?.LastLAT}&lon=${selectedShip?.aggregated_data?.LastLON}`,
+        }),
+      },
+    );
+    const classification = await res.text();
+    if (classification === "0") {
+      alert("No Oil Spill Detected by SAR");
+    } else if (classification == "1") {
+      alert("Oil Spill Detected by SAR");
+    }
   };
 
   const handleAISAnomalyDetection = async () => {
@@ -204,9 +222,6 @@ export default function Maps() {
                   className="w-3/5 rounded border-gray-300 text-lg focus:border-indigo-500 focus:ring-indigo-500"
                 >
                   <option value="option1">All Ships</option>
-                  <option value="option1">Oil Tankers</option>
-                  <option value="option2">Cargo</option>
-                  <option value="option3">Passenger</option>
                 </select>
               </div>
               <label className="flex items-center justify-center text-xl">
@@ -285,10 +300,10 @@ export default function Maps() {
                 </span>
               </div>
 
-              <div className="mx-4 flex items-center justify-center gap-4 rounded-md border-2 border-solid border-gray-500 bg-[#F9F3FF] py-2 text-xl">
+              {/* <div className="mx-4 flex items-center justify-center gap-4 rounded-md border-2 border-solid border-gray-500 bg-[#F9F3FF] py-2 text-xl">
                 <span>SAR Confirmation: </span>
                 <span>{"N/A"}</span>
-              </div>
+              </div> */}
 
               <div className="flex h-full w-full flex-col items-center justify-center p-2">
                 {selectedShip && (

@@ -122,19 +122,32 @@ export default function Maps() {
     try {
       if (selectedShip?.aggregated_data?.ShipName === "DLB 1600") {
       }
-      const imageResponse = await fetch("/alkhiran-dlb1600.jpeg");
+      const imageResponse = await fetch("/alkhiran-dlb16003.jpeg");
       const imageBlob = await imageResponse.blob();
 
       const formData = new FormData();
       formData.append("file", imageBlob, "alkhiran-dlb1600.jpeg");
+      let res;
 
-      const res = await fetch(
-        "https://45d0-35-237-46-186.ngrok-free.app//upload",
-        {
+      if (selectedShip?.aggregated_data?.ShipName === "DLB 1600") {
+        res = await fetch("https://aea7-35-237-46-186.ngrok-free.app/upload", {
           method: "POST",
           body: formData,
-        },
-      );
+        });
+      } else {
+        res = await fetch(
+          "https://aea7-35-237-46-186.ngrok-free.app/upload_from_url",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              url: `http://ec2-65-2-37-206.ap-south-1.compute.amazonaws.com/sar/generate_sar_image?lat=${selectedShip?.aggregated_data?.LastLAT}&lon=${selectedShip?.aggregated_data?.LastLON}`,
+            }),
+          },
+        );
+      }
 
       if (!res.ok) {
         throw new Error(`Failed to upload: ${res.statusText}`);
@@ -318,12 +331,6 @@ export default function Maps() {
                     : "No"}
                 </span>
               </div>
-
-              <div className="mx-4 flex items-center justify-center gap-4 rounded-md border-2 border-solid border-gray-500 bg-[#F9F3FF] py-2 text-xl">
-                <span>SAR Confirmation: </span>
-                <span>{"N/A"}</span>
-              </div>
-
               <div className="flex h-full w-full flex-col items-center justify-center p-2">
                 {selectedShip &&
                   selectedShip.aggregated_data?.ShipName === "DLB 1600" && (
